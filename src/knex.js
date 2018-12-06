@@ -7,6 +7,28 @@ import fakeClient from './util/fake-client';
 import { SUPPORTED_CLIENTS } from './constants';
 import { resolveClientNameWithAliases } from './helpers';
 
+if (process.env.KNEX_STATIC_DIALECTS === 1) {
+  const mssql = require('knex/lib/dialects/mssql');
+  const mysql = require('knex/lib/dialects/mysql');
+  const mysql2 = require('knex/lib/dialects/mysql2');
+  const oracle = require('knex/lib/dialects/oracle');
+  const oracledb = require('knex/lib/dialects/oracledb');
+  const postgres = require('knex/lib/dialects/postgres');
+  const redshift = require('knex/lib/dialects/redshift');
+  const sqlite3 = require('knex/lib/dialects/sqlite3');
+
+  const dialects = {
+    mssql,
+    mysql,
+    mysql2,
+    oracle,
+    oracledb,
+    pg,
+    redshift,
+    sqlite3,
+  };
+}
+
 export default function Knex(config) {
   // If config is a string, try to parse it
   if (typeof config === 'string') {
@@ -38,7 +60,12 @@ export default function Knex(config) {
     }
 
     const resolvedClientName = resolveClientNameWithAliases(clientName);
-    Dialect = require(`./dialects/${resolvedClientName}/index.js`);
+
+    if (process.env.KNEX_STATIC_DIALECTS === 1) {
+      Dialect = dialects[resolvedClientName];
+    } else {
+      Dialect = require(`./dialects/${resolvedClientName}/index.js`);
+    }
   }
 
   // If config connection parameter is passed as string, try to parse it
